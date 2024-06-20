@@ -11,7 +11,11 @@ class User(db.Model):
     password_hash = db.Column(db.Text(), nullable = False)
     is_staff = db.Column(db.Boolean(), default=False)
     is_active = db.Column(db.Boolean(), default=False)
-    orders =db.relationship('Order', backref='user', lazy=True)
+    orders =db.relationship('Order', backref='user_backref', lazy=True)
 
     def __repr__(self) -> str:
         return f"<User {self.username}>"
+    
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
