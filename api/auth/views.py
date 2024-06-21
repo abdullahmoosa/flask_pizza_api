@@ -1,8 +1,10 @@
 from flask_restx import Namespace, Resource, fields
 from flask import request
-from ..models.users import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from http import HTTPStatus
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required,get_jwt_identity
+
+from ..models.users import User
 
 auth_namespace = Namespace('auth', description='A namespace for authentication')
 
@@ -25,6 +27,14 @@ user_model = auth_namespace.model(
         'is_active' : fields.Boolean(required=True, description='A boolean value to indicate if the user is active or not'),
         'is_staff' : fields.Boolean(required=True, description='A boolean value to indicate if the user is a staff or not'),
         
+    }
+)
+
+login_model = auth_namespace.model(
+    'Login',{
+        'email' : fields.String(required=True, description='An email'),
+        'password' : fields.String(required=True, description='A password'),
+
     }
 )
 @auth_namespace.route('/signup')
@@ -53,8 +63,36 @@ class Login(Resource):
     """
     Login namespace
     """
+    @auth_namespace.expect(login_model)
     def post(self):
         """
         Authenticate a user and generate an access token
         """
-        pass
+        data = request.get_json()
+        email = data.get('email')
+        user = User.query.filter_by(email=email).first()
+        password = data.get('password')
+        if user is not None and check_password_hash(user.password_hash, password):
+            access_token = create_access_token(identity=user.username)
+            refresh_token = create_refresh_token(identity=user.username)
+            response = {
+                'access_token' : access_token,
+                'refresh_token' : refresh_token
+            }
+            return response, HTTPStatus.OK
+
+@auth_namespace.route('/refresh')
+class Refresh(Resource):
+    """
+    Refresh namespace
+    """
+    @jwt_required(refresh=True)
+    def post(self):
+        """
+        Generate a new access token from a refresh token
+        """
+
+        username = get_jwt_identity()  # jwt token will be passed via header in api request
+        access_token = create_access_token(identity=username)
+        response = {'access_token' : access_token}
+        return {"access_token": access_token}, HTTPStatus.OK
