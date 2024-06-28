@@ -57,11 +57,15 @@ class OrderUpdateGetDelete(Resource):
     """
     Order update, get and delete namespace
     """
+    @order_namespace.marshal_with(order_model)
+    @jwt_required()
     def get(self, order_id):
         """
         Get a specific order by ID
         """
-        pass
+        order = Order.get_by_id(order_id)
+
+        return order, HTTPStatus.OK
 
     def put(self, order_id):
         """
