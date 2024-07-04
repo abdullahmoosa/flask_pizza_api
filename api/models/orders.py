@@ -9,9 +9,10 @@ class Sizes(Enum):
     EXTRA_LARGE = 'extra_large'
 
 class OrderStatus(Enum):
-    PENDING='pending'
-    IN_TRANSIT='in_transit'
-    DELIVERED='delivered'  
+    PENDING = 'PENDING'
+    IN_TRANSIT = 'IN_TRANSIT'
+    DELIVERED = 'DELIVERED'
+    
 
 class Order(db.Model):
     __tablename__ = 'orders'

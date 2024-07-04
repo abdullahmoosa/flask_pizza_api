@@ -2,7 +2,7 @@ from flask_restx import Resource, Namespace, fields
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from http import HTTPStatus
 
-from ..models.orders import Order
+from ..models.orders import Order, OrderStatus
 from ..models.users import User
 from ..utils import db
 
@@ -15,8 +15,14 @@ order_model = order_namespace.model(
         'id': fields.Integer(description='Order ID'),
         'size': fields.String(description='Size of order', required=True, enum=['SMALL', 'MEDIUM', 'LARGE', 'EXTRA_LARGE']),
         'order_status': fields.String(description="The status of the Order", required=True, enum=['PENDING', 'IN_TRANSIT', 'DELIVERED']),
-        'flavour' : fields.String(description='Flavour of the order', required=True),
+        'flavour': fields.String(description='Flavour of the order', required=True),
         'quantity': fields.Integer(description='Quantity of the order', required=True),
+    }
+)
+
+order_status_model = order_namespace.model(
+    'OrderStatus',{
+        'order_status': fields.String(description="The status of the Order", required=True, enum=['PENDING', 'IN_TRANSIT', 'DELIVERED'])
     }
 )
 
@@ -134,11 +140,20 @@ class UserOrders(Resource):
 @order_namespace.route('/order/status/<int:order_id>')
 class UpdateOrderStatus(Resource):
     """
-    Update an order status namespace
+    Update an order status
     """
-
+    @order_namespace.expect(order_status_model)
+    @order_namespace.marshal_with(order_model)
+    @jwt_required()
     def patch(self, order_id):
         """
         Update the status of a specific order by ID
         """
-        pass 
+
+        data = order_namespace.payload
+        order_to_update = Order.get_by_id(order_id)
+        order_to_update.order_status = data['order_status']
+
+        db.session.commit()
+
+        return order_to_update, HTTPStatus.OK

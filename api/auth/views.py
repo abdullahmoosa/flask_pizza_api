@@ -3,6 +3,7 @@ from flask import request
 from werkzeug.security import generate_password_hash, check_password_hash
 from http import HTTPStatus
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required,get_jwt_identity
+from werkzeug.exceptions import Conflict, BadRequest
 
 from ..models.users import User
 
@@ -50,12 +51,18 @@ class SignUp(Resource):
         """
 
         data = request.get_json()
-        new_user = User(
-            username=data.get('username'),
-            email=data.get('email'),
-            password_hash= generate_password_hash(data.get('password'))
-        )
-        new_user.save()
+
+        try:
+            new_user = User(
+                username=data.get('username'),
+                email=data.get('email'),
+                password_hash= generate_password_hash(data.get('password'))
+            )
+            new_user.save()
+            return new_user, HTTPStatus.CREATED
+
+        except Exception as e:
+            raise Conflict(f"User with email {data.get('email')} already exists")
 
         return new_user, HTTPStatus.CREATED
 @auth_namespace.route('/login')
@@ -80,6 +87,8 @@ class Login(Resource):
                 'refresh_token' : refresh_token
             }
             return response, HTTPStatus.OK
+        
+        raise BadRequest("Invalid email or password")
 
 @auth_namespace.route('/refresh')
 class Refresh(Resource):

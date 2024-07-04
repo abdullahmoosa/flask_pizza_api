@@ -2,6 +2,7 @@ from flask import Flask
 from flask_restx import Api
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
+from werkzeug.exceptions import NotFound, MethodNotAllowed
 
 from .auth.views import auth_namespace
 from .orders.views import order_namespace
@@ -20,6 +21,8 @@ def create_app(config= config_dict['dev']):
     api.add_namespace(auth_namespace, path='/auth')
     api.add_namespace(order_namespace)
     jwt = JWTManager(app)
+
+
     @app.shell_context_processor
     def make_shell_context():
         return {
@@ -27,5 +30,15 @@ def create_app(config= config_dict['dev']):
             'User': User,
             'Order': Order
         }
+
+    @api.errorhandler(NotFound)
+    def not_found(error):
+        return {'error': 'Not found'}, 404
+    
+
+    @api.errorhandler(MethodNotAllowed)
+    def method_not_allowed(error):
+        return {'error': 'Method not allowed'}, 405
+
 
     return app
