@@ -16,6 +16,11 @@ class DevConfig(Config):
 
 
 class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_ECHO = True  
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False  # silence the deprecation warning
+
     pass
 
 class ProdConfig(Config):
