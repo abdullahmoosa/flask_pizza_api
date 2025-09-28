@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from http import HTTPStatus
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required,get_jwt_identity
 from werkzeug.exceptions import Conflict, BadRequest
-
+import logging
 from ..models.users import User
 
 auth_namespace = Namespace('auth', description='A namespace for authentication')
@@ -62,6 +62,7 @@ class SignUp(Resource):
             return new_user, HTTPStatus.CREATED
 
         except Exception as e:
+            logging.exception(e)
             raise Conflict(f"User with email {data.get('email')} already exists")
 
         return new_user, HTTPStatus.CREATED
